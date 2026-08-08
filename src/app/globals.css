@@ -1,0 +1,314 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import 'maplibre-gl/dist/maplibre-gl.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── CSS Variables ───────────────────────────────────────────────────────── */
+:root {
+  --background: #ffffff;
+  --surface: #f8fafc;
+  --surface-2: #f1f5f9;
+  --primary: #2563eb;
+  --primary-light: #eff6ff;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --danger: #dc2626;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --border: #e5e7eb;
+  --radius-card: 20px;
+  --radius-btn: 12px;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  --shadow-float: 0 8px 24px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+}
+
+/* ─── Base ────────────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--background);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* ─── Selection ───────────────────────────────────────────────────────────── */
+::selection { background: #dbeafe; color: #1d4ed8; }
+
+/* ─── Typography ──────────────────────────────────────────────────────────── */
+.text-display { font-size: 3rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
+.text-heading { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
+.text-subheading { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; }
+.text-numeric { font-size: 2.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ─── Component Layer ─────────────────────────────────────────────────────── */
+@layer components {
+  .card {
+    background-color: var(--background);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.06); }
+  .card-surface {
+    background-color: var(--surface);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border);
+  }
+}
+
+/* ─── Glass ───────────────────────────────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+.glass-dark {
+  background: rgba(17, 24, 39, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-btn);
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  outline: none;
+  white-space: nowrap;
+  min-height: 44px;
+  min-width: 44px;
+}
+.btn:focus-visible { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35); }
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+.btn-primary:hover { background: #1d4ed8; box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--surface-2); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+.btn-ghost:hover { background: var(--surface); color: var(--text-primary); }
+
+/* ─── Input ───────────────────────────────────────────────────────────────── */
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-btn);
+  border: 1.5px solid var(--border);
+  background: var(--background);
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  min-height: 48px;
+  font-family: inherit;
+}
+.input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12); }
+.input::placeholder { color: var(--text-muted); }
+
+/* ─── Badge ───────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.badge-primary { background: var(--primary-light); color: var(--primary); }
+.badge-success { background: #f0fdf4; color: #16a34a; }
+.badge-warning { background: #fffbeb; color: #d97706; }
+.badge-danger { background: #fef2f2; color: #dc2626; }
+.badge-neutral { background: var(--surface-2); color: var(--text-secondary); }
+
+/* ─── Progress Bar ────────────────────────────────────────────────────────── */
+.progress-bar {
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  border-radius: 99px;
+  transition: width 1s ease-out;
+}
+
+/* ─── Skeleton ────────────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Live Pulse ──────────────────────────────────────────────────────────── */
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #16a34a;
+  position: relative;
+  display: inline-block;
+}
+.live-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: rgba(22, 163, 74, 0.3);
+  animation: live-pulse 2s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.6); opacity: 0; }
+}
+
+/* ─── Train Type Badge ────────────────────────────────────────────────────── */
+.train-type-rajdhani { background: #eff6ff; color: #2563eb; }
+.train-type-shatabdi { background: #f0fdf4; color: #16a34a; }
+.train-type-vande_bharat { background: #faf5ff; color: #7c3aed; }
+.train-type-superfast { background: #fffbeb; color: #d97706; }
+.train-type-duronto { background: #fef2f2; color: #dc2626; }
+
+/* ─── Sidebar ─────────────────────────────────────────────────────────────── */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+.nav-item:hover { background: var(--surface); color: var(--text-primary); }
+.nav-item.active { background: var(--primary-light); color: var(--primary); }
+.nav-item.active svg { color: var(--primary); }
+
+/* ─── Map ─────────────────────────────────────────────────────────────────── */
+.maplibregl-map { border-radius: 16px; }
+.maplibregl-ctrl-group { border-radius: 10px !important; box-shadow: var(--shadow-float) !important; border: none !important; }
+.maplibregl-ctrl button { border-radius: 8px !important; }
+.maplibregl-canvas { border-radius: inherit; }
+
+/* ─── Animations ──────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in { animation: fadeIn 0.25s ease-out; }
+.animate-slide-up { animation: slideUp 0.3s ease-out; }
+.animate-slide-down { animation: slideDown 0.2s ease-out; }
+.animate-scale-in { animation: scaleIn 0.2s ease-out; }
+
+/* ─── Map Popup Styles ──────────────────────────────────────────────────────── */
+.maplibregl-popup-content {
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14) !important;
+  border: 1px solid #e5e7eb !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+}
+.maplibregl-popup-close-button {
+  font-size: 16px !important;
+  color: #9ca3af !important;
+  padding: 4px 8px !important;
+}
+.maplibregl-popup-close-button:hover { color: #111827 !important; }
+.maplibregl-ctrl-bottom-right { display: none; }
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  .sidebar-hidden { display: none !important; }
+}
+
+/* ─── Chart Overrides ─────────────────────────────────────────────────────── */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: #f1f5f9;
+}
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  border-radius: 12px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+/* ─── Focus Ring ──────────────────────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ─── Reduced Motion ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
