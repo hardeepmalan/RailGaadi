@@ -4,6 +4,7 @@ import './globals.css';
 import { Providers } from '@/providers';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { TelemetryTracker } from '@/components/telemetry/TelemetryTracker';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -44,6 +45,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={inter.variable}>
       <body className="bg-slate-50 text-slate-900 antialiased min-h-screen">
         <Providers>
+          {/* Automatic Telemetry & Page Action Tracker */}
+          <TelemetryTracker />
+
           <div className="min-h-screen flex flex-col">
             {/* Top Navbar & Slide-out 3-Bars Hamburger Sidebar Drawer */}
             <Sidebar />

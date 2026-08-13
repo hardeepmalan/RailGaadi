@@ -1,126 +1,260 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Code, Settings, User, Shield, Info } from 'lucide-react';
-
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { Mail, Send, Sparkles, CheckCircle2, ShieldCheck, BarChart3, LogOut, Lock, User, Info } from 'lucide-react';
+import { clsx } from 'clsx';
 
 export default function ProfilePageClient() {
-  const [lowData, setLowData] = useState(false);
-  const [vibe, setVibe] = useState(true);
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setLowData(localStorage.getItem('railgaadi_low_data') === 'true');
-      setVibe(localStorage.getItem('railgaadi_vibrate') !== 'false');
-    }
-  }, []);
+  const [suggestion, setSuggestion] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sentSuccess, setSentSuccess] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
-  const toggleLowData = (val: boolean) => {
-    setLowData(val);
-    localStorage.setItem('railgaadi_low_data', String(val));
+  const isAuthenticated = status === 'authenticated' && !!session?.user?.email;
+  const verifiedEmail = session?.user?.email;
+  const isAdmin = session?.user?.role === 'admin';
+
+  // Get anonymous session id from localStorage
+  const getAnonId = () => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('rg_anon_session_id') || '';
   };
 
-  const toggleVibe = (val: boolean) => {
-    setVibe(val);
-    localStorage.setItem('railgaadi_vibrate', String(val));
+  const handleSendSuggestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!suggestion.trim() || suggestion.trim().length < 5) {
+      setFeedbackError('Please write at least 5 characters.');
+      return;
+    }
+    setSending(true);
+    setFeedbackError(null);
+
+    try {
+      const body: Record<string, string> = {
+        suggestion: suggestion.trim(),
+        sessionId: getAnonId(),
+        anonId: getAnonId(),
+      };
+
+      // For anonymous users, include optional name/email from form
+      if (!isAuthenticated) {
+        if (name.trim()) body.name = name.trim();
+        if (email.trim()) body.email = email.trim();
+      }
+      // For authenticated users: backend uses session email; don't send email in body
+
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setSentSuccess(true);
+        setSuggestion('');
+        setName('');
+        setEmail('');
+      } else {
+        setFeedbackError(data.error || 'Failed to submit. Please try again.');
+      }
+    } catch (e: any) {
+      setFeedbackError('Network error. Please try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white pb-12">
-      {/* Hero Banner */}
-      <div className="bg-gradient-to-br from-blue-900 via-slate-900 to-slate-950 px-5 pt-10 pb-8 border-b border-slate-800 text-center relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative max-w-md mx-auto space-y-4">
-          <div className="w-20 h-20 bg-blue-600 text-white flex items-center justify-center rounded-full text-2xl font-bold mx-auto border-4 border-slate-900 shadow-xl">
-            HM
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-16">
+      {/* Header */}
+      <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-800 text-white px-5 pt-8 pb-10 text-center shadow-md">
+        <div className="max-w-xl mx-auto">
+          <div className="w-20 h-20 bg-white text-blue-700 flex items-center justify-center rounded-3xl text-2xl font-black mx-auto shadow-lg mb-3 border-2 border-white/40">
+            {isAuthenticated ? verifiedEmail!.substring(0, 2).toUpperCase() : '🚂'}
           </div>
-          <div>
-            <h1 className="text-xl font-bold">Hardeep Malan</h1>
-            <p className="text-xs text-blue-400 font-semibold tracking-wider uppercase mt-1">Owner & Lead Architect</p>
-            <p className="text-slate-400 text-xs mt-2 max-w-xs mx-auto">
-              RailGaadi is a premium journey companion built to make train travel across India transparent, offline-resilient, and smarter.
-            </p>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-1">
+            {isAuthenticated ? (session.user.name || verifiedEmail) : 'RailGaadi Profile'}
+          </h1>
+          <p className="text-blue-100 text-xs sm:text-sm">
+            {isAuthenticated ? `Verified Account · ${verifiedEmail}` : 'Suggest features or sign in for full access'}
+          </p>
+
+          <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
+            {isAuthenticated ? (
+              <>
+                <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 text-xs font-bold px-3 py-1 rounded-full">
+                  <CheckCircle2 size={13} className="text-emerald-300" /> {verifiedEmail} (Verified ✓)
+                </div>
+                {isAdmin && (
+                  <button onClick={() => router.push('/admin/analytics')}
+                    className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs px-3.5 py-1 rounded-full shadow-md transition-all">
+                    <BarChart3 size={13} /> Admin Dashboard
+                  </button>
+                )}
+                <button onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                  className="inline-flex items-center gap-1 bg-white/20 hover:bg-white/30 text-white font-bold text-xs px-3 py-1 rounded-full transition-all">
+                  <LogOut size={12} /> Sign Out
+                </button>
+              </>
+            ) : (
+              <button onClick={() => router.push('/auth/signin')}
+                className="inline-flex items-center gap-1.5 bg-white text-blue-700 hover:bg-blue-50 font-extrabold text-xs px-4 py-1.5 rounded-full shadow-md transition-all">
+                <Lock size={13} /> Sign In for Verified Access
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 mt-6 space-y-6">
-        {/* Settings Module */}
-        <section className="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-4">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-2.5">
-            <Settings size={16} className="text-blue-500" />
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">Preferences</h2>
+      <div className="max-w-xl mx-auto px-4 py-6 space-y-6">
+        {/* ── Suggestion / Feedback Form ─────────────────────────────── */}
+        <section className="bg-white rounded-3xl border border-slate-200/90 shadow-xl p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <div className="text-xs text-blue-600 font-bold uppercase tracking-wider flex items-center gap-1">
+                <Sparkles size={14} className="text-amber-500" /> Send Suggestion
+              </div>
+              <h2 className="text-lg font-black text-slate-900">Suggest Features to Hardeep</h2>
+            </div>
+            <span className="text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-xl hidden sm:block">
+              hardeepmalan@gmail.com
+            </span>
           </div>
 
-          <div className="space-y-4">
-            {/* Low Data Toggle */}
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold text-slate-200">Low Data Mode</div>
-                <div className="text-[10px] text-slate-500">Reduces background coordinate sync & disables map imagery</div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={lowData}
-                  onChange={(e) => toggleLowData(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white" />
-              </label>
+          {sentSuccess ? (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-center space-y-2">
+              <CheckCircle2 size={28} className="text-emerald-600 mx-auto" />
+              <div className="font-extrabold text-base text-emerald-900">Suggestion Sent! 🎉</div>
+              <p className="text-xs text-emerald-700 leading-relaxed">
+                Your suggestion has been delivered to <strong>hardeepmalan@gmail.com</strong> and saved in the admin dashboard.
+              </p>
+              <button onClick={() => setSentSuccess(false)}
+                className="text-xs font-bold text-emerald-700 underline">
+                Send another suggestion
+              </button>
             </div>
+          ) : (
+            <form onSubmit={handleSendSuggestion} className="space-y-3">
+              {/* Email display — auto-detected if logged in, optional field if anonymous */}
+              {isAuthenticated ? (
+                /* Verified user: show read-only email badge — no editable input */
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase">Sending As (Auto-Detected)</div>
+                    <div className="text-sm font-extrabold text-slate-900 font-mono">{verifiedEmail}</div>
+                  </div>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-lg border border-emerald-300 flex-shrink-0">
+                    ✓ Verified
+                  </span>
+                </div>
+              ) : (
+                /* Anonymous user: optional name + email */
+                <div className="bg-amber-50/60 border border-amber-200/80 rounded-2xl p-3.5 space-y-2">
+                  <div className="text-xs font-bold text-amber-800 flex items-center gap-1.5">
+                    <Info size={13} /> No login required — fields below are optional
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Your Name (optional)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Rahul"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-blue-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Your Email (optional)</label>
+                      <input
+                        type="email"
+                        placeholder="for follow-up"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-blue-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
-            {/* Haptic Alerts Toggle */}
-            <div className="flex items-center justify-between">
+              {/* Suggestion text */}
               <div>
-                <div className="text-xs font-semibold text-slate-200">Haptic/Vibration Alerts</div>
-                <div className="text-[10px] text-slate-500">Vibrate device on reaching next station or destination</div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={vibe}
-                  onChange={(e) => toggleVibe(e.target.checked)}
-                  className="sr-only peer"
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
+                  Your Suggestion or Feedback *
+                </label>
+                <textarea
+                  rows={4}
+                  required
+                  placeholder="Share your idea to improve RailGaadi... (e.g. Add platform number alerts, live delay map, offline schedule)"
+                  value={suggestion}
+                  onChange={(e) => setSuggestion(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-sm font-medium outline-none focus:border-blue-500 resize-none"
                 />
-                <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white" />
-              </label>
+              </div>
+
+              {feedbackError && (
+                <div className="text-xs font-bold text-red-700 bg-red-50 p-3 rounded-xl border border-red-200">
+                  {feedbackError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={suggestion.trim().length < 5 || sending}
+                className="w-full py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-extrabold rounded-2xl text-sm flex items-center justify-center gap-2 transition-all shadow-md"
+              >
+                {sending ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Sending to hardeepmalan@gmail.com…
+                  </>
+                ) : (
+                  <>
+                    <Send size={16} />
+                    {isAuthenticated ? `Send as ${verifiedEmail}` : 'Send Suggestion'}
+                  </>
+                )}
+              </button>
+
+              {!isAuthenticated && (
+                <p className="text-center text-[11px] text-slate-400">
+                  <button onClick={() => router.push('/auth/signin')} className="text-blue-600 font-bold underline">
+                    Sign in
+                  </button>
+                  {' '}to have your verified email automatically attached to your feedback.
+                </p>
+              )}
+            </form>
+          )}
+        </section>
+
+        {/* ── About Card ─────────────────────────────────────────────── */}
+        <section className="bg-white rounded-3xl border border-slate-200/90 shadow-md p-5 space-y-3">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <ShieldCheck size={18} className="text-blue-600" />
+            <h2 className="text-sm font-extrabold text-slate-900">About RailGaadi v2.0</h2>
+          </div>
+          <div className="text-xs text-slate-600 space-y-2">
+            <p>Designed and maintained by <strong className="text-slate-900">Hardeep Malan</strong>. Privacy-first analytics, server-verified identities, 2D LHB coach layouts, and live train tracking.</p>
+            <div className="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-200">
+              <div>
+                <div className="text-[10px] font-bold text-slate-400 uppercase">Developer Contact</div>
+                <div className="text-xs font-bold text-blue-700">hardeepmalan@gmail.com</div>
+              </div>
+              <span className="text-[11px] bg-purple-100 text-purple-800 font-bold px-2.5 py-1 rounded-xl border border-purple-200">v2.0</span>
             </div>
           </div>
         </section>
-
-        {/* Developer Info Profile Card */}
-        <section className="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-4">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-2.5">
-            <Code size={16} className="text-emerald-500" />
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">About the Project</h2>
-          </div>
-
-          <div className="space-y-3 text-xs text-slate-400 leading-relaxed">
-            <p>
-              This app is designed and maintained by <strong className="text-slate-200">Hardeep Malan</strong>. It delivers complete offline schedules, live navigation timelines, alerts, and platform layouts.
-            </p>
-            <div className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800/80">
-              <div>
-                <div className="text-[10px] uppercase text-slate-500 font-bold">App Version</div>
-                <div className="text-xs font-semibold text-slate-300">RailGaadi V2.0.0 (Release-Ready)</div>
-              </div>
-              <span className="text-[10px] bg-emerald-950 text-emerald-400 font-bold border border-emerald-900 py-0.5 px-2 rounded-md">
-                Production
-              </span>
-            </div>
-          </div>
-        </section>
-
-        {/* Creator Footer attribution */}
-        <footer className="text-center pt-4">
-          <div className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">
-            Designed & Developed with ♥ by Hardeep Malan
-          </div>
-          <div className="text-[9px] text-slate-700 mt-1 font-mono">
-            © 2026 RailGaadi Inc. All rights reserved.
-          </div>
-        </footer>
       </div>
     </div>
   );
