@@ -196,3 +196,116 @@ export interface UserProfile {
   recentSearches: RecentSearch[];
   createdAt: string;
 }
+
+// ─── Railway Station (V2) ─────────────────────────────────────────────────────
+
+export interface RailwayStation {
+  id: string;
+  code: string;
+  name: string;
+  normalizedName: string;
+  city?: string;
+  state?: string;
+  latitude?: number;
+  longitude?: number;
+  zone?: string;
+  division?: string;
+  aliases?: string[];
+  isMajor?: boolean;
+  active?: boolean;
+}
+
+export interface TrainRouteStop {
+  trainNumber: string;
+  stationCode: string;
+  stationName: string;
+  arrival?: string;
+  departure?: string;
+  day?: number;
+  haltMinutes?: number;
+  distanceKm?: number;
+  sequence: number;
+}
+
+export interface TrainBetweenResult {
+  train: Train;
+  fromStop: TrainRouteStop;
+  toStop: TrainRouteStop;
+  durationMinutes: number;
+  stops: number;
+}
+
+// ─── PNR (V2) ────────────────────────────────────────────────────────────────
+
+export interface PassengerStatus {
+  number: number;
+  bookingStatus?: string;
+  currentStatus?: string;
+  coach?: string;
+  berth?: string;
+  berthType?: string;
+}
+
+export interface PNRStatus {
+  pnr: string;
+  trainNumber?: string;
+  trainName?: string;
+  journeyDate?: string;
+  from?: RailwayStation;
+  to?: RailwayStation;
+  boardingPoint?: RailwayStation;
+  chartPrepared?: boolean;
+  passengers: PassengerStatus[];
+  fetchedAt: string;
+  available: boolean;
+  message?: string;
+}
+
+// ─── Alerts (V2) ─────────────────────────────────────────────────────────────
+
+export type JourneyAlertType =
+  | 'destination_approaching'
+  | 'next_station'
+  | 'delay_update'
+  | 'arrived'
+  | 'journey_started'
+  | 'platform_change';
+
+export type AlertSeverity = 'info' | 'warning' | 'success' | 'error';
+
+export interface JourneyAlert {
+  id: string;
+  type: JourneyAlertType;
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  severity: AlertSeverity;
+}
+
+export interface DestinationAlarm {
+  enabled: boolean;
+  triggerType: 'distance_km' | 'stations_before';
+  triggerValue: number; // km or number of stations
+  notificationPermission?: NotificationPermission;
+}
+
+// ─── Share (V2) ──────────────────────────────────────────────────────────────
+
+export interface ShareToken {
+  token: string;
+  trainNumber: string;
+  trainName: string;
+  createdAt: string;
+  expiresAt: string;
+}
+
+// ─── Recent Stations (V2) ────────────────────────────────────────────────────
+
+export interface RecentStation {
+  code: string;
+  name: string;
+  city?: string;
+  state?: string;
+  usedAt: string;
+}

@@ -42,14 +42,14 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="bg-background text-text-primary antialiased">
+      <body className="bg-slate-50 text-slate-900 antialiased min-h-screen">
         <Providers>
-          <div className="flex min-h-screen">
-            {/* Desktop Sidebar */}
+          <div className="min-h-screen flex flex-col">
+            {/* Top Navbar & Slide-out 3-Bars Hamburger Sidebar Drawer */}
             <Sidebar />
 
-            {/* Main Content */}
-            <main className="flex-1 lg:ml-64 pb-20 lg:pb-0">
+            {/* Full-Screen Main Content Container */}
+            <main className="w-full flex-1 pb-20 lg:pb-6">
               {children}
             </main>
           </div>

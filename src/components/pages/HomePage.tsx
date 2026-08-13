@@ -1,20 +1,51 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Train, Clock, TrendingUp, ArrowRight, X, Heart, ShieldCheck } from 'lucide-react';
+import { Train, Clock, TrendingUp, ArrowRight, X, Heart, ShieldCheck, FileText, Shield, Landmark, LayoutGrid, Utensils, ArrowLeftRight, Search } from 'lucide-react';
 import { SearchBar } from '@/components/search/SearchBar';
+import { StationSearchInput } from '@/components/search/StationSearchInput';
 import { useFavorites, useRecentSearches } from '@/hooks/useLocalStorage';
 import { TRENDING_TRAINS, TRAIN_TYPE_LABELS, TRAIN_TYPE_COLORS } from '@/data/trains';
+import { RailwayStation } from '@/types';
 import { clsx } from 'clsx';
 import { format } from 'date-fns';
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return { text: 'Good Morning', emoji: '🌅' };
+  if (h >= 12 && h < 17) return { text: 'Good Afternoon', emoji: '☀️' };
+  if (h >= 17 && h < 21) return { text: 'Good Evening', emoji: '🌇' };
+  return { text: 'Good Night', emoji: '🌙' };
+}
+
+const QUICK_ACTIONS = [
+  { id: 'pnr', label: 'PNR Status', icon: FileText, color: 'text-blue-600 bg-blue-50', href: '/pnr' },
+  { id: 'emergency', label: 'Emergency', icon: Shield, color: 'text-red-600 bg-red-50', href: '/emergency' },
+  { id: 'fare', label: 'Fare Calc', icon: Landmark, color: 'text-emerald-600 bg-emerald-50', href: '/fare' },
+  { id: 'coach', label: 'Coach Pos', icon: LayoutGrid, color: 'text-purple-600 bg-purple-50', href: '/coach' },
+  { id: 'food', label: 'Food Order', icon: Utensils, color: 'text-amber-600 bg-amber-50', href: '/food' },
+  { id: 'search', label: 'Trains', icon: Search, color: 'text-indigo-600 bg-indigo-50', href: '/search' },
+];
 
 export function HomePage() {
   const router = useRouter();
   const { favorites, removeFavorite } = useFavorites();
   const { recents, clearRecents } = useRecentSearches();
+  const [fromStation, setFromStation] = useState<RailwayStation | null>(null);
+  const [toStation, setToStation] = useState<RailwayStation | null>(null);
+  const greeting = getGreeting();
 
   const handleTrainSelect = (trainNumber: string) => {
     router.push(`/track/${trainNumber}`);
+  };
+
+  const handleStationSearch = () => {
+    if (fromStation && toStation) {
+      router.push(`/search?from=${fromStation.code}&to=${toStation.code}`);
+    } else {
+      router.push('/search');
+    }
   };
 
   return (
@@ -22,10 +53,15 @@ export function HomePage() {
       {/* ─── Hero Section ────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-50 px-5 pt-10 pb-10 lg:px-8 border-b border-border">
         <div className="max-w-2xl mx-auto space-y-6">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100/80 border border-blue-200 text-blue-800 text-xs font-bold shadow-sm">
-            <span className="live-dot" aria-hidden="true" />
-            <span className="uppercase tracking-wider">Live Indian Railways Telemetry</span>
+          {/* Greeting + Badge */}
+          <div className="flex items-center justify-between">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100/80 border border-blue-200 text-blue-800 text-xs font-bold shadow-sm">
+              <span className="live-dot" aria-hidden="true" />
+              <span className="uppercase tracking-wider">Live Indian Railways Telemetry</span>
+            </div>
+            <div className="text-sm text-slate-500 font-medium hidden sm:block">
+              {greeting.emoji} {greeting.text}
+            </div>
           </div>
 
           <h1 className="text-display text-slate-900 leading-tight">
@@ -68,6 +104,63 @@ export function HomePage() {
       </section>
 
       <div className="max-w-2xl mx-auto px-5 lg:px-8 py-8 space-y-8">
+        {/* ─── Quick Actions ───────────────────────────────────────── */}
+        <section aria-labelledby="quick-actions-heading">
+          <h2 id="quick-actions-heading" className="text-subheading text-slate-900 mb-3">Quick Actions</h2>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+            {QUICK_ACTIONS.map(({ id, label, icon: Icon, color, href }) => (
+              <button
+                key={id}
+                id={`quick-action-${id}`}
+                onClick={() => router.push(href)}
+                className="flex flex-col items-center gap-2 p-3 bg-white rounded-2xl border border-slate-200 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
+              >
+                <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center', color)}>
+                  <Icon size={18} />
+                </div>
+                <span className="text-[11px] font-semibold text-slate-700 text-center leading-tight">{label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* ─── Train Between Stations ─────────────────────────────── */}
+        <section aria-labelledby="station-search-heading">
+          <h2 id="station-search-heading" className="text-subheading text-slate-900 mb-3">Train Between Stations</h2>
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3">
+            <StationSearchInput
+              id="home-from-station"
+              label="From"
+              placeholder="Departure station…"
+              value={fromStation}
+              onSelect={setFromStation}
+              onClear={() => setFromStation(null)}
+            />
+            <div className="flex justify-center">
+              <button
+                onClick={() => { const t = fromStation; setFromStation(toStation); setToStation(t); }}
+                className="p-2 rounded-full bg-blue-50 border border-blue-100 text-blue-600 hover:bg-blue-100 transition-all hover:rotate-180 duration-300"
+                aria-label="Swap stations"
+              >
+                <ArrowLeftRight size={15} />
+              </button>
+            </div>
+            <StationSearchInput
+              id="home-to-station"
+              label="To"
+              placeholder="Arrival station…"
+              value={toStation}
+              onSelect={setToStation}
+              onClear={() => setToStation(null)}
+            />
+            <button
+              onClick={handleStationSearch}
+              className="w-full py-3 rounded-xl font-bold text-sm bg-blue-600 hover:bg-blue-700 text-white transition-all flex items-center justify-center gap-2"
+            >
+              <Search size={15} /> Find Trains
+            </button>
+          </div>
+        </section>
         {/* ─── Recent Searches ───────────────────────────────────── */}
         {recents.length > 0 && (
           <section aria-labelledby="recent-searches-heading">
