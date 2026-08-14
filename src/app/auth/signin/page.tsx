@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Train, Lock, ShieldCheck, Mail, ArrowRight, CheckCircle2, Sparkles, AlertCircle } from 'lucide-react';
-import { clsx } from 'clsx';
+import { Train, Lock, ShieldCheck, Mail, ArrowRight, AlertCircle } from 'lucide-react';
 
-export default function SignInPage() {
+function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/profile';
@@ -80,6 +79,8 @@ export default function SignInPage() {
               <input
                 type="email"
                 required
+                name="email"
+                autoComplete="email"
                 placeholder="e.g. hardeepmalan@gmail.com or user@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -130,5 +131,20 @@ export default function SignInPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="flex items-center gap-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-md">
+          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-bold text-slate-700">Loading sign in page…</span>
+        </div>
+      </div>
+    }>
+      <SignInForm />
+    </Suspense>
   );
 }
