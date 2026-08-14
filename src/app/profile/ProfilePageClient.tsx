@@ -27,6 +27,16 @@ export default function ProfilePageClient() {
     return localStorage.getItem('rg_anon_session_id') || '';
   };
 
+  // Pre-fill email from localStorage for non-logged-in users if previously entered
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !isAuthenticated) {
+      const savedEmail = localStorage.getItem('rg_user_saved_email');
+      const savedName = localStorage.getItem('rg_user_saved_name');
+      if (savedEmail) setEmail(savedEmail);
+      if (savedName) setName(savedName);
+    }
+  }, [isAuthenticated]);
+
   const handleSendSuggestion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!suggestion.trim() || suggestion.trim().length < 5) {
@@ -37,6 +47,10 @@ export default function ProfilePageClient() {
     setFeedbackError(null);
 
     try {
+      if (!isAuthenticated) {
+        if (email.trim()) localStorage.setItem('rg_user_saved_email', email.trim());
+        if (name.trim()) localStorage.setItem('rg_user_saved_name', name.trim());
+      }
       const body: Record<string, string> = {
         suggestion: suggestion.trim(),
         sessionId: getAnonId(),
@@ -78,8 +92,15 @@ export default function ProfilePageClient() {
       {/* Header */}
       <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-800 text-white px-5 pt-8 pb-10 text-center shadow-md">
         <div className="max-w-xl mx-auto">
-          <div className="w-20 h-20 bg-white text-blue-700 flex items-center justify-center rounded-3xl text-2xl font-black mx-auto shadow-lg mb-3 border-2 border-white/40">
-            {isAuthenticated ? verifiedEmail!.substring(0, 2).toUpperCase() : '🚂'}
+          <div className="w-20 h-20 bg-gradient-to-tr from-blue-700 via-indigo-700 to-purple-800 text-white flex items-center justify-center rounded-3xl text-2xl font-black mx-auto shadow-xl mb-3 border-2 border-white/40 relative overflow-hidden">
+            {session?.user?.image ? (
+              <img src={session.user.image} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <div className="flex flex-col items-center justify-center">
+                <span className="text-2xl font-black tracking-wider text-white">HM</span>
+                <span className="text-[8px] font-extrabold text-blue-200 uppercase tracking-widest -mt-1">RailGaadi</span>
+              </div>
+            )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-1">
             {isAuthenticated ? (session.user.name || verifiedEmail) : 'RailGaadi Profile'}
@@ -177,7 +198,9 @@ export default function ProfilePageClient() {
                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Your Email (optional)</label>
                       <input
                         type="email"
-                        placeholder="for follow-up"
+                        name="email"
+                        autoComplete="email"
+                        placeholder="Tap for 1-click browser email autofill"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:border-blue-400"

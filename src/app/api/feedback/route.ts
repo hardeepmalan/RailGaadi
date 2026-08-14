@@ -22,8 +22,8 @@ async function sendSuggestionEmail(opts: {
   suggestionText: string;
   submittedAt: string;
 }) {
-  if (!process.env.GMAIL_APP_PASSWORD) {
-    console.log('📧 Email not sent — GMAIL_APP_PASSWORD not set in .env.local');
+  if (!process.env.GMAIL_APP_PASSWORD || process.env.GMAIL_APP_PASSWORD === 'your_16_char_app_password_here') {
+    console.log('📧 Email delivery paused: GMAIL_APP_PASSWORD is not set in .env.local yet.');
     return false;
   }
 
